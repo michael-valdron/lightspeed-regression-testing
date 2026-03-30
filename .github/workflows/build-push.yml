@@ -23,7 +23,7 @@ env:
   IMAGE_NAME: lightspeed-regression-runner
   IMAGE_REGISTRY: quay.io
   REGISTRY_ORG: rh-ee-jdubrick
-  CONTAINER_FILE: tests/Containerfile
+  CONTAINER_FILE: test-suite/Containerfile
   TAG_BASE: latest
 
 jobs:
