@@ -54,6 +54,7 @@ jobs:
             ${{ env.CONTAINER_FILE }}
           archs: amd64, arm64
           oci: true
+          context: test-suite
 
       - name: Check images
         run: |
