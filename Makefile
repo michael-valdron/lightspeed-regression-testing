@@ -54,3 +54,10 @@ test-suite-build:
 .PHONY: test-suite-run
 test-suite-run:
 	$(COMPOSE) $(ENV_FILES) --profile tests -f $(LOCAL_COMPOSE_PATH) run --rm test-suite
+
+.PHONY: deploy-ocp
+deploy-ocp:
+	oc kustomize ./ocp --load-restrictor=LoadRestrictionsNone | oc apply -f - 
+.PHONY: remove-ocp
+remove-ocp:
+	oc kustomize ./ocp --load-restrictor=LoadRestrictionsNone | oc delete -f -

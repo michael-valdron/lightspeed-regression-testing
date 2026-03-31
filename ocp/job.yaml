@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: lightspeed-tests
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: lightspeed-regression
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: lightspeed-regression-testing
+                  service: lightspeed-core
+              topologyKey: kubernetes.io/hostname
+      restartPolicy: Never
+      containers:
+        - name: lightspeed-regression-test-runner
+          image: quay.io/rh-ee-jdubrick/lightspeed-regression-runner:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Waiting for service..."
+              until curl -fsS http://lightspeed-svc:8080/readiness; do
+                echo "."
+                sleep 5
+              done
+              sleep 15
+              echo "Running tests..."
+              FEEDBACK_STORAGE_PATH=/tmp/data/feedback RESULTS_DIR=/tmp/results LS_BASE_URL=http://lightspeed-svc:8080 PROVIDER_MODE=vllm_only pytest tests -v
+          volumeMounts:
+            - name: feedback-data
+              mountPath: /tmp/data/feedback
+              subPath: feedback
+            - name: feedback-data
+              mountPath: /tmp/results
+              subPath: results
+      volumes:
+        - name: feedback-data
+          persistentVolumeClaim:
+            claimName: feedback-data

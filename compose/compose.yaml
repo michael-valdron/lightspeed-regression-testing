@@ -41,7 +41,7 @@ services:
       timeout: 3s
       retries: 20
       start_period: 10s
-  mcp-server:
+  test-mcp-server:
     image: quay.io/redhat-ai-dev/test-mcp-server:latest
     ports:
       - "8888:8888"

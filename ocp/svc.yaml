@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lightspeed-svc
+  labels:
+    app: lightspeed-regression-testing
+spec:
+  selector:
+    service: lightspeed-core
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-mcp-server
+  labels:
+    app: lightspeed-regression-testing
+spec:
+  selector:
+    mcp-service: test-mcp-server
+  ports:
+    - port: 8888
+      targetPort: 8888

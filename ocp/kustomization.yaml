@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: regression-testing
+
+images:
+  - name: quay.io/redhat-ai-dev/rag-content
+    newTag: release-1.9-lls-0.4.3-d0444cd9b57222ec9bdbaa36354337480a2ecf97
+  - name: quay.io/lightspeed-core/lightspeed-stack
+    newTag: dev-latest
+  - name: quay.io/redhat-ai-dev/test-mcp-server
+    newTag: latest
+  - name: quay.io/rh-ee-jdubrick/lightspeed-regression-runner
+    newTag: latest
+
+resources:
+  - pvc.yaml
+  - svc.yaml
+  - deployment.yaml
+  - job.yaml
+
+configMapGenerator:
+  - name: lightspeed-stack-config
+    files:
+      - ../compose/lightspeed-core-configs/lightspeed-stack.yaml
+  - name: lightspeed-profile
+    files:
+      - ../compose/lightspeed-core-configs/rhdh-profile.py
+  - name: llama-stack-config
+    files:
+      - ../compose/llama-stack-configs/config.yaml
+secretGenerator:
+  - name: llama-stack-secrets
+    envs:
+      - ../compose/env/values.env
+
+commonLabels:
+  app: lightspeed-regression-testing

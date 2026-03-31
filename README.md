@@ -49,7 +49,6 @@ PROVIDER_MODE=vllm_only pytest test-suite/tests -q
 
 - `lightspeed-core` now writes feedback to a host bind mount at `./feedback-data`
   (mounted into the container at `/tmp/data/feedback`).
-- Direct local pytest run: set `FEEDBACK_STORAGE_PATH=./feedback-data`
 - `make compose-up` prepares `./feedback-data` with writable permissions for the container.
 
 Optional overrides:
@@ -61,18 +60,6 @@ Optional overrides:
 
 ### Run Commands
 
-Build test image:
-
-```bash
-make test-suite-build
-```
-
-Run tests in compose:
-
-```bash
-make test-suite-run
-```
-
 Logs are written as structured `.txt` case files under `results/run_<timestamp>/`.
 
 Example local run (outside container):
@@ -81,3 +68,40 @@ Example local run (outside container):
 mkdir -p ./compose/feedback-data results
 FEEDBACK_STORAGE_PATH=./compose/feedback-data PROVIDER_MODE=vllm_only pytest test-suite/tests -q
 ```
+
+### Testing in Cluster
+
+There is a set of `.yaml` files used in with `Kustomize` to deploy the resources to OCP for testing. The following are deployed as part of one deployment:
+
+- Lightspeed Core
+- Ollama Safety Guard
+- Test MCP Server
+
+The testing suite is run as a Job, and communicates with Lightspeed Core via an internal Service.
+
+You can easily edit the image tags by updating `images.newTag` in [ocp/kustomization.yaml](./ocp/kustomization.yaml).
+
+The testing require the following secrets to be set in your `values.env` file:
+- ENABLE_VLLM
+- ENABLE_OPENAI
+- VLLM_URL
+- VLLM_API_KEY
+- OPENAI_API_KEY
+
+> [!NOTE]
+> 
+> You can run with just `openai` or just `vllm` by editing the `PROVIDER_MODE` in [ocp/job.yaml](./ocp/job.yaml). You can omit `ENABLE_VLLM/ENABLE_OPENAI` depending on your choice.
+> 
+> See [provider-modes](#provider-modes) for more.
+
+To deploy:
+```
+make deploy-ocp
+```
+
+To tear down:
+```
+make remove-ocp
+```
+
+The logs of the Job will outline any testing failures. Due to the Job container shutting down after completion, the results are written to a Persistent Volume that is accessible via the Lightspeed Core container at `/tmp/results`.

@@ -34,7 +34,7 @@ ensure_lightspeed_mcp_server() {
 mcp_servers:
   - name: test-mcp-server
     provider_id: "model-context-protocol"
-    url: "http://mcp-server:8888/mcp"
+    url: "http://test-mcp-server:8888/mcp"
     authorization_headers:
       Authorization: "client"
 EOF
