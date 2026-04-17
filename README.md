@@ -36,18 +36,24 @@ Create your own local `values.env` for secret or environment-specific values.
 cp compose/env/default-values.env compose/env/values.env
 ```
 
-Local compose applies your overrides from `compose/env/values.env`, and finally hardcodes the local
-validation settings in `compose/compose.yaml`:
+For both local compose and OCP, `compose/env/values.env` is the single toggle for
+validation:
 
-- `ENABLE_VLLM=true`
-- `ENABLE_VALIDATION=true`
-- `VALIDATION_PROVIDER=vllm`
-- `VALIDATION_MODEL_NAME=redhataillama-31-8b-instruct`
+- Set `ENABLE_VALIDATION=true` to enable validation and run the problematic-query test.
+- Leave `ENABLE_VALIDATION` empty to disable validation and skip that test.
+
+The local test suite auto-loads `compose/env/values.env`, and the OCP manifests
+inject the same settings through `llama-stack-secrets`.
 
 If you already have an older local `values.env`, remove any legacy
-`ENABLE_SAFETY` or `SAFETY_*` entries. You can still override the local compose
-defaults in `compose/compose.yaml` if you want to point validation at a
-different model later.
+`ENABLE_SAFETY` or `SAFETY_*` entries.
+
+`compose/compose.yaml` still pins the local validation defaults when validation is
+enabled:
+
+- `ENABLE_VLLM=true`
+- `VALIDATION_PROVIDER=vllm`
+- `VALIDATION_MODEL_NAME=redhataillama-31-8b-instruct`
 
 ## Lightspeed API Regression Test Suite
 
@@ -113,10 +119,13 @@ The testing requires the following secrets to be set in your `values.env` file:
 - VLLM_API_KEY
 - OPENAI_API_KEY
 
-The deployment already sets `ENABLE_VALIDATION=true`,
-`VALIDATION_PROVIDER=vllm`, and
-`VALIDATION_MODEL_NAME=redhataillama-31-8b-instruct` in
-`ocp/deployment.yaml`, so no Ollama-specific safety settings are required.
+The deployment and test job both read `ENABLE_VALIDATION` from the generated
+`llama-stack-secrets` secret, which comes from `compose/env/values.env`. That
+means the validation shield and the problematic-query test now toggle on or off
+together in both local and OCP runs. `ocp/deployment.yaml` still pins
+`VALIDATION_PROVIDER=vllm` and
+`VALIDATION_MODEL_NAME=redhataillama-31-8b-instruct` when validation is enabled,
+so no Ollama-specific safety settings are required.
 
 > [!NOTE]
 > 

@@ -21,6 +21,9 @@ spec:
       containers:
         - name: lightspeed-regression-test-runner
           image: quay.io/rh-ee-jdubrick/lightspeed-regression-runner:latest
+          envFrom:
+            - secretRef:
+                name: llama-stack-secrets
           command: ["/bin/sh", "-c"]
           args:
             - |

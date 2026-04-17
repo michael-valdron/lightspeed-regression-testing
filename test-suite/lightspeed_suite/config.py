@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
 SUPPORTED_PROVIDER_MODES = {"both", "openai_only", "vllm_only"}
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LOCAL_VALUES_ENV_PATH = REPO_ROOT / "compose" / "env" / "values.env"
 
 
 @dataclass(frozen=True)
@@ -19,6 +22,7 @@ class ProviderConfig:
 class SuiteConfig:
     base_url: str
     provider_mode: str
+    enable_validation: bool
     openai_model: str
     vllm_model: str
     user_id_prefix: str
@@ -73,7 +77,30 @@ def get_env(
         raise RuntimeError(f"Environment variable {key} must be an integer") from exc
 
 
+def load_env_file_defaults(path: Path) -> None:
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, sep, value = line.partition("=")
+        if not sep:
+            continue
+        os.environ.setdefault(key.strip(), value.strip())
+
+
+def get_env_nonempty_flag(key: str, default: bool = False) -> bool:
+    raw = os.getenv(key)
+    if raw is None or not raw.strip():
+        return default
+
+    return True
+
+
 def load_config() -> SuiteConfig:
+    load_env_file_defaults(LOCAL_VALUES_ENV_PATH)
     base_url = str(get_env("LS_BASE_URL", "http://localhost:8080")).rstrip("/")
     provider_mode = str(get_env("PROVIDER_MODE", "both")).lower()
     if provider_mode not in SUPPORTED_PROVIDER_MODES:
@@ -85,6 +112,7 @@ def load_config() -> SuiteConfig:
     config = SuiteConfig(
         base_url=base_url,
         provider_mode=provider_mode,
+        enable_validation=get_env_nonempty_flag("ENABLE_VALIDATION", default=False),
         openai_model=str(get_env("OPENAI_MODEL", "gpt-4o-mini")),
         vllm_model=str(get_env("VLLM_MODEL", "redhataillama-31-8b-instruct")),
         user_id_prefix=str(get_env("TEST_USER_ID_PREFIX", "test-user")),

@@ -93,8 +93,6 @@ spec:
             - secretRef:
                 name: llama-stack-secrets
           env:
-            - name: ENABLE_VALIDATION
-              value: "true"
             - name: VALIDATION_PROVIDER
               value: "vllm"
             - name: VALIDATION_MODEL_NAME

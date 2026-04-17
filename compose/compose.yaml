@@ -28,7 +28,6 @@ services:
       - ./env/values.env
     environment:
       ENABLE_VLLM: "true"
-      ENABLE_VALIDATION: "true"
       VALIDATION_PROVIDER: "vllm"
       VALIDATION_MODEL_NAME: "redhataillama-31-8b-instruct"
     healthcheck:
