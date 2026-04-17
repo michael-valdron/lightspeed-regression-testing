@@ -31,34 +31,8 @@ spec:
             claimName: feedback-data
         - name: rag-content
           emptyDir: {}
-        - name: ollama-data
-          emptyDir: {}
 
       initContainers:
-        - name: pull-safety-model
-          image: docker.io/ollama/ollama:0.18.2
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              set -e
-              MODEL="${SAFETY_MODEL:-llama-guard3:8b}"
-              ollama serve &
-              PID=$!
-              until ollama list >/dev/null 2>&1; do
-                sleep 1
-              done
-              ollama pull "$MODEL"
-              kill $PID
-          envFrom:
-            - secretRef:
-                name: llama-stack-secrets
-          env:
-            - name: HOME
-              value: /ollama
-          volumeMounts:
-            - name: ollama-data
-              mountPath: /ollama
-        
         - name: rag-content-init
           image: quay.io/redhat-ai-dev/rag-content:release-1.9-lls-0.4.3-d0444cd9b57222ec9bdbaa36354337480a2ecf97
           command:
@@ -119,10 +93,12 @@ spec:
             - secretRef:
                 name: llama-stack-secrets
           env:
-            - name: SAFETY_URL
-              value: http://localhost:11434/v1
-            - name: ENABLE_SAFETY
+            - name: ENABLE_VALIDATION
               value: "true"
+            - name: VALIDATION_PROVIDER
+              value: "vllm"
+            - name: VALIDATION_MODEL_NAME
+              value: "redhataillama-31-8b-instruct"
 
         - name: test-mcp-server
           image: quay.io/redhat-ai-dev/test-mcp-server:latest
@@ -136,23 +112,3 @@ spec:
             limits:
               cpu: "100m"
               memory: "128Mi"
-
-        - name: ollama-safety-guard
-          image: docker.io/ollama/ollama:0.18.2
-          command: ["ollama", "serve"]
-          resources:
-            requests:
-              cpu: "1000m"
-              memory: "4Gi"
-            limits:
-              cpu: "2000m"
-              memory: "6Gi"
-          volumeMounts:
-            - name: ollama-data
-              mountPath: /ollama
-          envFrom:
-            - secretRef:
-                name: llama-stack-secrets
-          env:
-            - name: HOME
-              value: /ollama

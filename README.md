@@ -36,6 +36,19 @@ Create your own local `values.env` for secret or environment-specific values.
 cp compose/env/default-values.env compose/env/values.env
 ```
 
+Local compose applies your overrides from `compose/env/values.env`, and finally hardcodes the local
+validation settings in `compose/compose.yaml`:
+
+- `ENABLE_VLLM=true`
+- `ENABLE_VALIDATION=true`
+- `VALIDATION_PROVIDER=vllm`
+- `VALIDATION_MODEL_NAME=redhataillama-31-8b-instruct`
+
+If you already have an older local `values.env`, remove any legacy
+`ENABLE_SAFETY` or `SAFETY_*` entries. You can still override the local compose
+defaults in `compose/compose.yaml` if you want to point validation at a
+different model later.
+
 ## Lightspeed API Regression Test Suite
 
 ### Provider Modes
@@ -79,22 +92,31 @@ FEEDBACK_STORAGE_PATH=./compose/feedback-data PROVIDER_MODE=vllm_only pytest tes
 
 ### Testing in Cluster
 
-There is a set of `.yaml` files used in with `Kustomize` to deploy the resources to OCP for testing. The following are deployed as part of one deployment:
+There is a set of `.yaml` files used with `Kustomize` to deploy the resources to
+OCP for testing. The following are deployed as part of one deployment:
 
-- Lightspeed Core
-- Ollama Safety Guard
+- Lightspeed Core with validation enabled
 - Test MCP Server
 
 The testing suite is run as a Job, and communicates with Lightspeed Core via an internal Service.
 
+There is no separate Ollama sidecar in the OCP deployment anymore; question
+validation now runs inside `lightspeed-core` using the configured inference
+provider.
+
 You can easily edit the image tags by updating `images.newTag` in [ocp/kustomization.yaml](./ocp/kustomization.yaml).
 
-The testing require the following secrets to be set in your `values.env` file:
+The testing requires the following secrets to be set in your `values.env` file:
 - ENABLE_VLLM
 - ENABLE_OPENAI
 - VLLM_URL
 - VLLM_API_KEY
 - OPENAI_API_KEY
+
+The deployment already sets `ENABLE_VALIDATION=true`,
+`VALIDATION_PROVIDER=vllm`, and
+`VALIDATION_MODEL_NAME=redhataillama-31-8b-instruct` in
+`ocp/deployment.yaml`, so no Ollama-specific safety settings are required.
 
 > [!NOTE]
 > 
