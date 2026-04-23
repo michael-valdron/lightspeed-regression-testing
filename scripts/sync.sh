@@ -34,7 +34,6 @@ ensure_lightspeed_mcp_server() {
   fi
 
   cat <<'EOF' >> "${destination}"
-mcp_servers:
   - name: test-mcp-server
     provider_id: "model-context-protocol"
     url: "http://test-mcp-server:8888/mcp"

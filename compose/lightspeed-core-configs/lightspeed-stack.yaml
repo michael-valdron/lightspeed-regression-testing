@@ -36,6 +36,11 @@ conversation_cache:
 customization:
   profile_path: '/app-root/rhdh-profile.py'
 mcp_servers:
+  - name: mcp-integration-tools
+    provider_id: 'model-context-protocol'
+    url: 'http://localhost:7007/api/mcp-actions/v1'
+    authorization_headers:
+      Authorization: 'client'
   - name: test-mcp-server
     provider_id: "model-context-protocol"
     url: "http://test-mcp-server:8888/mcp"
