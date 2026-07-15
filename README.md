@@ -85,6 +85,13 @@ Optional overrides:
 - `VLLM_MODEL` (default `redhataillama-31-8b-instruct`) --> team cluster
 - `RESULTS_DIR` (default `./results` locally; compose test container sets `/results`)
 
+### Runner image readiness wait
+
+The `lightspeed-regression-runner` image entrypoint polls `{LS_BASE_URL}/readiness`
+before running pytest. Override with `READINESS_TIMEOUT_SECONDS` (default `300`),
+`READINESS_INTERVAL_SECONDS` (default `5`), or `READINESS_GRACE_SECONDS` (default `0`;
+OCP sets `15`). Set `SKIP_READINESS_WAIT` to any nonempty value to skip the wait.
+
 ### Run Commands
 
 Logs are written as structured `.txt` case files under `results/run_<timestamp>/`.

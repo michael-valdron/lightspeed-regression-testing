@@ -24,17 +24,21 @@ spec:
           envFrom:
             - secretRef:
                 name: llama-stack-secrets
-          command: ["/bin/sh", "-c"]
+          env:
+            - name: LS_BASE_URL
+              value: http://lightspeed-svc:8080
+            - name: FEEDBACK_STORAGE_PATH
+              value: /tmp/data/feedback
+            - name: RESULTS_DIR
+              value: /tmp/results
+            - name: PROVIDER_MODE
+              value: vllm_only
+            - name: READINESS_GRACE_SECONDS
+              value: "15"
           args:
-            - |
-              echo "Waiting for service..."
-              until curl -fsS http://lightspeed-svc:8080/readiness; do
-                echo "."
-                sleep 5
-              done
-              sleep 15
-              echo "Running tests..."
-              FEEDBACK_STORAGE_PATH=/tmp/data/feedback RESULTS_DIR=/tmp/results LS_BASE_URL=http://lightspeed-svc:8080 PROVIDER_MODE=vllm_only pytest tests -v
+            - pytest
+            - tests
+            - -v
           volumeMounts:
             - name: feedback-data
               mountPath: /tmp/data/feedback
