@@ -34,7 +34,7 @@ spec:
 
       initContainers:
         - name: rag-content-init
-          image: quay.io/redhat-ai-dev/rag-content:release-1.9-lls-0.4.3-d0444cd9b57222ec9bdbaa36354337480a2ecf97
+          image: quay.io/redhat-ai-dev/rag-content:release-1.10-lls-0.5.0-8c231a3b5177f12fff9db042dfa4091d8f2f26b3
           command:
             - /bin/sh
             - -c
@@ -93,6 +93,9 @@ spec:
             - secretRef:
                 name: llama-stack-secrets
           env:
+            # Upstream lightspeed-stack.yaml defaults to 127.0.0.1; K8s probes/Services need the pod IP.
+            - name: SERVICE_HOST
+              value: "0.0.0.0"
             - name: VALIDATION_PROVIDER
               value: "vllm"
             - name: VALIDATION_MODEL_NAME

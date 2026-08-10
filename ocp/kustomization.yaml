@@ -5,9 +5,9 @@ namespace: regression-testing
 
 images:
   - name: quay.io/redhat-ai-dev/rag-content
-    newTag: release-1.9-lls-0.5.0-642c567fe10a62b5ff711654306b72912f341e05
+    newTag: release-1.10-lls-0.5.0-8c231a3b5177f12fff9db042dfa4091d8f2f26b3
   - name: quay.io/lightspeed-core/lightspeed-stack
-    newTag: 0.5.1
+    newTag: 0.6.1
   - name: quay.io/redhat-ai-dev/test-mcp-server
     newTag: latest
   - name: quay.io/rh-ee-jdubrick/lightspeed-regression-runner

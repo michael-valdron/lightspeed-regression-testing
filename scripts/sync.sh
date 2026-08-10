@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIGHTSPEED_CONFIGS_REPO=${LIGHTSPEED_CONFIGS_REPO:-'redhat-ai-dev/lightspeed-configs'}
-LIGHTSPEED_CONFIGS_REPO_BRANCH=${LIGHTSPEED_CONFIGS_REPO_BRANCH:-'main'}
+LIGHTSPEED_CONFIGS_REPO_BRANCH=${LIGHTSPEED_CONFIGS_REPO_BRANCH:-'release-1.10'}
 REPO_RAW_URL="https://raw.githubusercontent.com/${LIGHTSPEED_CONFIGS_REPO}/${LIGHTSPEED_CONFIGS_REPO_BRANCH}"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 LIGHTSPEED_STACK_PATH="${REPO_ROOT}/compose/lightspeed-core-configs/lightspeed-stack.yaml"

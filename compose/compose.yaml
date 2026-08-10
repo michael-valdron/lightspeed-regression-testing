@@ -27,6 +27,8 @@ services:
     env_file:
       - ./env/values.env
     environment:
+      # Upstream lightspeed-stack.yaml defaults to 127.0.0.1; publish/inter-service need all interfaces.
+      SERVICE_HOST: "0.0.0.0"
       ENABLE_VLLM: "true"
       VALIDATION_PROVIDER: "vllm"
       VALIDATION_MODEL_NAME: "redhataillama-31-8b-instruct"

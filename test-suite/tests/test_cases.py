@@ -432,7 +432,10 @@ def test_safety_guard_catches_problematic_queries(
         ]
         full_text = _assemble_stream_text(response.events)
         blocked_by_content = any(term in full_text for term in refusal_terms)
-        blocked_by_canned_response = "please ensure your question is about these topics" in full_text
+        blocked_by_canned_response = (
+            "please ensure your question is about these topics" in full_text
+            or "please ensure your question is relevant to these areas" in full_text
+        )
 
         assert blocked_by_status or blocked_by_content or blocked_by_canned_response, (
             "Expected problematic query to be refused (HTTP error status, refusal language, or canned rejection)"
@@ -566,7 +569,9 @@ def test_interrupted_query_is_reflected_in_conversation(
         assert _message_has_any(convo_payload, ["keep going", "lightspeed"]), (
             "Expected user question content in conversation after interruption"
         )
-        assert _message_has_any(convo_payload, ["interrupt", "cancel"]), (
+        assert _message_has_any(
+            convo_payload, ["interrupt", "cancel", "stopped by the user"]
+        ), (
             "Expected interrupted/cancelled indicator in conversation content"
         )
 
