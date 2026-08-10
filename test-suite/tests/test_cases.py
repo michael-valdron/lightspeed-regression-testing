@@ -624,7 +624,7 @@ def test_mcp_tool_calls_single_server_auth_behavior(
                 "Expected HTTP 401 for invalid MCP auth "
                 f"(got {invalid.status_code}; events={list_event_names(invalid.events)})"
             )
-        except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ProtocolError) as exc:
+        except requests.exceptions.ChunkedEncodingError as exc:
             invalid_auth = {"stream_aborted": True, "error": str(exc)}
 
         valid = client.streaming_query(
