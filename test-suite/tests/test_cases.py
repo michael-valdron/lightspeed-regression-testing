@@ -537,7 +537,8 @@ def test_interrupted_query_is_reflected_in_conversation(
         )
         conversation_id, request_id = _wait_for_start_event(active)
 
-        time.sleep(3) # let the conversation actually start 
+        # Interrupt as soon as the start event is observed. Waiting a fixed delay
+        # races fast providers (e.g. OpenAI) that finish before interrupt runs.
         interrupt_response = client.interrupt(user_id=user_id, request_id=request_id)
         stream_result = active.wait(timeout=config.timeout_seconds)
 
@@ -591,39 +592,57 @@ def test_mcp_tool_calls_single_server_auth_behavior(
             "model": provider_config.model,
             "query": query,
         }
-        invalid = client.streaming_query(
-            user_id=user_id,
-            provider=provider_config.provider,
-            model=provider_config.model,
-            query=query,
-            headers={
-                "MCP-HEADERS": client.mcp_headers_value(config.mcp_invalid_headers),
-                "Content-Type": "application/json",
-            },
-            system_prompt="only use mcp tool calls. Do not search for reference data to provide answers.",
+        system_prompt = (
+            "only use mcp tool calls. Do not search for reference data to provide answers."
         )
+        invalid_headers = {
+            "MCP-HEADERS": client.mcp_headers_value(config.mcp_invalid_headers),
+            "Content-Type": "application/json",
+        }
+        valid_headers = {
+            "MCP-HEADERS": client.mcp_headers_value(config.mcp_valid_headers),
+            "Content-Type": "application/json",
+        }
+
+        # LCORE mcp.feature expects HTTP 401 for invalid MCP credentials.
+        # Some MCP servers skip auth on the preflight GET probe, so LCORE may
+        # begin streaming (200) and then abort mid-stream when tools/list hits
+        # 401 (ChunkedEncodingError). Treat that as auth rejection too — not as
+        # a soft success of 200 + start/end.
+        invalid_auth: dict[str, Any]
+        try:
+            invalid = client.streaming_query(
+                user_id=user_id,
+                provider=provider_config.provider,
+                model=provider_config.model,
+                query=query,
+                headers=invalid_headers,
+                system_prompt=system_prompt,
+            )
+            invalid_auth = _stream_response_snapshot(invalid)
+            assert invalid.status_code == 401, (
+                "Expected HTTP 401 for invalid MCP auth "
+                f"(got {invalid.status_code}; events={list_event_names(invalid.events)})"
+            )
+        except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ProtocolError) as exc:
+            invalid_auth = {"stream_aborted": True, "error": str(exc)}
+
         valid = client.streaming_query(
             user_id=user_id,
             provider=provider_config.provider,
             model=provider_config.model,
             query=query,
-            headers={
-                "MCP-HEADERS": client.mcp_headers_value(config.mcp_valid_headers),
-                "Content-Type": "application/json",
-            },
-            system_prompt="only use mcp tool calls. Do not search for reference data to provide answers.",
+            headers=valid_headers,
+            system_prompt=system_prompt,
         )
         record.set_request(common_payload)
         record.set_response(
             {
-                "invalid_auth": _stream_response_snapshot(invalid),
+                "invalid_auth": invalid_auth,
                 "valid_auth": _stream_response_snapshot(valid),
             }
         )
-        valid_events = valid.events
-        valid_contains_turn_complete = event_by_name(valid_events, "turn_complete")
-
-        assert invalid.status_code == 200, "Expected invalid MCP header to still return an OK response"
-        assert len(invalid.events) == 2, "Expected invalid MCP auth to only have start and end event"
         assert valid.status_code == 200, "Expected valid MCP header to return an OK response"
-        assert valid_contains_turn_complete is not None, "Expect valid MCP header to contain a turn_complete event"
+        assert event_by_name(valid.events, "turn_complete") is not None, (
+            "Expect valid MCP header to contain a turn_complete event"
+        )
